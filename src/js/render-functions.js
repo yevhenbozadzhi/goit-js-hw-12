@@ -54,3 +54,9 @@ export function hideLoader() {
 export function clearGallery() {
   galleryContainer.innerHTML = '';
 }
+export function showLoadMore() {
+  document.querySelector('.load-more').style.display = 'block';
+}
+export function hideLoadMore() {
+  document.querySelector('.load-more').style.display = 'none';
+}

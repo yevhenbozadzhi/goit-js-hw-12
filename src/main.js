@@ -4,6 +4,8 @@ import {
   clearGallery,
   showLoader,
   hideLoader,
+  showLoadMore,
+  hideLoadMore,
 } from './js/render-functions.js';
 
 import iziToast from "izitoast";
@@ -14,37 +16,56 @@ const input = form.elements['search-text'];
 const loadMoreBtn = document.querySelector('.load-more');
 
 let currentPage = 1;
-let currentQuery = '';
-let isLoading = false;
+let query = '';
+let totalPage = 0;
+let per_page = 15;
+// let isLoading = false;
 
 async function searchImages(reset = false) {
-  if (isLoading) return; 
-  const query = currentQuery;
-
+  // if (isLoading) return; 
   if (!query) return;
 
-  isLoading = true;
-  showLoader();
-  loadMoreBtn.style.display = 'none';
-
+  // isLoading = true;
   try {
+    showLoader();
     const images = await getImagesByQuery(query, currentPage);
-
-    if (images.length === 0 && currentPage === 1) {
+    hideLoader();
+    if (images.total === 0) {
       iziToast.warning({
         title: 'Oops!',
         message: 'No images found. Try another word!',
         position: 'topRight',
       });
       clearGallery();
-      loadMoreBtn.style.display = 'none';
       return;
     }
 
     if (reset) {
       clearGallery();
     }
-    createGallery(images);
+    createGallery(images.hits);
+
+
+    
+    const totalPage = images.total / per_page;
+    if (totalPage > currentPage) {
+      showLoadMore();
+    }
+    if (totalPage <= currentPage) {
+      hideLoadMore();
+      iziToast.info({
+        title: 'Oops!',
+        message: 'We are sorry, but you have reached the end of search results.',
+        position: 'topRight',
+      });
+      currentPage = 1;
+    }
+
+ 
+    
+
+
+
     
 if (!reset) {
   window.scrollBy({
@@ -54,28 +75,24 @@ if (!reset) {
 }
 
 
-    if (images.length >= 15) {
-      loadMoreBtn.style.display = 'block'; 
-    } else {
-      loadMoreBtn.style.display = 'none';
-    }
+    // if (images.total >= 15) {
+    //   loadMoreBtn.style.display = 'block'; 
+    // } else {
+    //   loadMoreBtn.style.display = 'none';
+    // }
   } catch (error) {
     iziToast.error({
       title: 'Error',
       message: `Something went wrong: ${error.message}`,
       position: 'topRight',
     });
-  } finally {
-    hideLoader();
-    isLoading = false;
   }
 }
 
 form.addEventListener('submit', event => {
   event.preventDefault();
-  currentQuery = input.value.trim();
-  if (!currentQuery) return;
-  currentPage = 1;
+  query = input.value.trim();
+  if (!query) return;
   searchImages(true);
   input.value = '';
 });
